@@ -1,0 +1,52 @@
+---
+- name: Desplegar aplicación en Podman
+  hosts: vm
+  become: yes
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Update APT package cache
+      apt:
+        update_cache: yes
+        
+    - name: Instalar Podman
+      apt:
+        name: podman
+        state: present
+
+    - name: Autenticarse en el Azure Container Registry (ACR)
+      command: >
+        podman login -u {{ acr_username }} -p {{ acr_password }} {{ acr_url }}
+
+    - name: Descargar la imagen del contenedor desde el ACR
+      command: >
+        podman pull {{ acr_url }}/{{ image_name }}:{{ image_tag }}
+
+    - name: Verificar si el contenedor ya existe
+      command: podman ps -a --format "{{ '{{' }}.Names{{ '}}' }}"
+      register: running_containers
+
+    - name: Detener y eliminar el contenedor si ya existe
+      command: podman rm -f my-nginx
+      when: "'my-nginx' in running_containers.stdout_lines"
+      ignore_errors: yes
+
+    - name: Desplegar el contenedor con Podman
+      command: >
+        podman run -d --name my-nginx -p 80:80 {{ acr_url }}/{{ image_name }}:{{ image_tag }}
+
+    - name: Crear un servicio systemd para el contenedor
+      shell: |
+        podman generate systemd --name my-nginx > /etc/systemd/system/my-nginx.service
+      args:
+        creates: /etc/systemd/system/my-nginx.service
+
+    - name: Recargar el daemon de systemd
+      command: systemctl daemon-reload
+
+    - name: Habilitar e iniciar el servicio del contenedor
+      service:
+        name: my-nginx
+        enabled: yes
+        state: started

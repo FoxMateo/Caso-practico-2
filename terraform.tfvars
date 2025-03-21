@@ -1,0 +1,8 @@
+location            = "westeurope"
+resource_group_name = "rg-casopractico2"
+vm_name             = "vm-casopractico2"
+admin_username      = "azureuser"
+acr_name            = "acrcasopractico2"
+aks_name            = "aks-casopractico2"
+environment         = "casopractico2"
+prefix              = "cp2"
