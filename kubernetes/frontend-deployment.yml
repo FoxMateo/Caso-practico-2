@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: cp2acrcasopractico2/redis-commander:latest
+        image: cp2acrcasopractico2/azure-vote-front:v2
         ports:
         - containerPort: 80
         env:
